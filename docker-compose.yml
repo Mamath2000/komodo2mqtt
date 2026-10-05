@@ -1,6 +1,11 @@
 services:
   komodo2mqtt:
-    build: .
+    image: mathmath350/komodo2mqtt:latest
     container_name: komodo2mqtt
     restart: unless-stopped
-    env_file: .env
+    environment:
+      - NODE_ENV=production
+    env_file: .env   # KOMODO_API_KEY / KOMODO_API_SECRET (voir .env.example)
+    volumes:
+      - ./config.conf:/app/config.conf:ro
+    # No Docker healthcheck: state is published on MQTT <topic>/lwt (retained)

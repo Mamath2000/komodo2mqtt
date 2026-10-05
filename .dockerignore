@@ -1,0 +1,5 @@
+# Contexte de build minimal : jamais de configuration ni de secrets dans l'image
+*
+!package.json
+!package-lock.json
+!src/

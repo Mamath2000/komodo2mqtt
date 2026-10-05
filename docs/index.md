@@ -1,0 +1,44 @@
+---
+id: index
+title: komodo2mqtt
+description: Pont Komodo vers Home Assistant via MQTT (discovery device-based)
+sidebar_position: 0
+---
+
+# komodo2mqtt
+
+Lit l'API de Komodo à intervalle régulier et publie sur MQTT les serveurs, les dockers et les mises à jour
+disponibles, avec la découverte automatique de Home Assistant au format *device-based* (un seul message
+`homeassistant/device/<id>/config` par appareil). Les mises à jour et les « tout mettre à jour » se déclenchent
+depuis Home Assistant.
+
+- Configuration, MQTT, commandes : [Configuration](configuration.md).
+
+## Ce que l'on obtient dans Home Assistant
+
+**Appareil « Komodo »**
+
+- capteurs : serveurs, dockers, dockers actifs, mises à jour disponibles ;
+- `API Komodo` (connectivité) ;
+- bouton **Tout mettre à jour**.
+
+**Un appareil par serveur** (rattaché à Komodo)
+
+- capteurs : état du serveur, dockers, dockers actifs, mises à jour disponibles ;
+- bouton **Tout mettre à jour** (limité au serveur) ;
+- un capteur d'état par docker : `running`, `healthy`, `unhealthy`, `starting`, `stopped`, `restarting`, `paused` ;
+- une entité **update** par service de stack et par deployment, installable depuis Home Assistant.
+
+## Fonctionnement
+
+À chaque passage (`interval_seconds`, 60 s par défaut) :
+
+1. Lecture de `ListServers`, `ListStacks`, `ListDeployments` (sans pagination, `limit: 0`) puis `ListContainers` par
+   serveur joignable (`ListDockerContainers` avant Komodo 2.3).
+2. Les mises à jour viennent de `update_available` : par service pour les stacks, par deployment sinon. Les dockers
+   qui ne dépendent ni d'un stack ni d'un deployment n'ont que leur état.
+3. Publication (retenue, uniquement si la valeur change) des états et de la découverte ; un serveur disparu est retiré.
+
+Installer une mise à jour (entité `update` ou bouton) exécute dans Komodo, **l'une après l'autre** et en attendant la
+fin de chaque Update : `PullStack` puis `DeployStack` (limités aux services concernés), ou `PullDeployment` puis
+`Deploy`. Pendant l'opération, l'entité passe en « mise à jour en cours ».
