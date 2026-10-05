@@ -1,0 +1,6 @@
+services:
+  komodo2mqtt:
+    build: .
+    container_name: komodo2mqtt
+    restart: unless-stopped
+    env_file: .env

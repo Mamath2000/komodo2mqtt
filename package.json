@@ -1,0 +1,16 @@
+{
+  "name": "komodo2mqtt",
+  "version": "0.1.0",
+  "description": "Pont Komodo -> MQTT -> Home Assistant (discovery device-based)",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT",
+  "dependencies": {
+    "mqtt": "^5.10.0"
+  }
+}
