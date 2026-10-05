@@ -36,6 +36,8 @@ Ou sans Docker : `npm ci && node --env-file=.env src/index.js` (Node ≥ 20).
 | `DISCOVERY_PREFIX` | `homeassistant` | Préfixe de discovery HA |
 
 ## Notes
+- Testé contre les types de l'API Komodo (`ListServers`, `ListStacks`, `ListDeployments`, `ListContainers` — `ListDockerContainers` avant la v2.3 —, `PullStack`, `DeployStack`, `PullDeployment`, `Deploy`, `GetUpdate`). Les listes sont demandées sans pagination (`limit: 0`).
+- `/execute` rend la main avant la fin de l'opération : l'app attend la fin de chaque Update Komodo avant d'enchaîner.
 - Les dockers non gérés par un stack/deployment Komodo n'ont que leur statut (pas d'update).
 - Les mises à jour sont exécutées l'une après l'autre ; `in_progress` est affiché sur l'entité update.
 - Tests : `npm test`.

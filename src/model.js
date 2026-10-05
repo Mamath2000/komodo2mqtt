@@ -16,11 +16,20 @@ export function containerState(c) {
   return state || 'unknown';
 }
 
+// ListContainers (Komodo >= 2.3), ListDockerContainers avant.
+async function listContainers(komodo, server) {
+  try {
+    return await komodo.read('ListContainers', { server });
+  } catch (e) {
+    return komodo.read('ListDockerContainers', { server });
+  }
+}
+
 export async function buildModel(komodo) {
   const [servers, stacks, deployments] = await Promise.all([
-    komodo.read('ListServers'),
-    komodo.read('ListStacks'),
-    komodo.read('ListDeployments'),
+    komodo.list('ListServers'),
+    komodo.list('ListStacks'),
+    komodo.list('ListDeployments'),
   ]);
 
   const out = [];
@@ -29,13 +38,13 @@ export async function buildModel(komodo) {
     let containers = [];
     if (state === 'Ok') {
       try {
-        containers = (await komodo.read('ListDockerContainers', { server: s.id })).map((c) => ({
+        containers = (await listContainers(komodo, s.id)).map((c) => ({
           key: `c_${slug(c.name)}`,
           name: c.name,
           state: containerState(c),
         }));
       } catch (e) {
-        console.error(`ListDockerContainers ${s.name}: ${e.message}`);
+        console.error(`ListContainers ${s.name}: ${e.message}`);
       }
     }
 
@@ -49,6 +58,7 @@ export async function buildModel(komodo) {
           service: svc.service,
           title: `${st.name}/${svc.service}`,
           image: svc.image || svc.service,
+          latest: svc.latest_image || null,
           available: !!svc.update_available,
         });
       }
@@ -60,6 +70,7 @@ export async function buildModel(komodo) {
         deployment: d.name,
         title: d.name,
         image: d.info?.image || d.name,
+        latest: null,
         available: !!d.info?.update_available,
       });
     }

@@ -43,7 +43,7 @@ export function build(model, cfg, busy = new Set()) {
         t(u.key),
         JSON.stringify({
           installed_version: u.image,
-          latest_version: u.available ? `${u.image} (maj disponible)` : u.image,
+          latest_version: u.available ? u.latest || `${u.image} (maj disponible)` : u.image,
           title: u.title,
           in_progress: busy.has(u.key),
         }),
