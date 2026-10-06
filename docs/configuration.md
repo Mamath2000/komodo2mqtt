@@ -40,6 +40,7 @@ ne renvoie à un utilisateur que les ressources sur lesquelles il a un droit : s
 - **Alertes** : il n'existe pas de droit « alertes » à part. `ListAlerts` ne renvoie que les alertes des ressources que
   l'utilisateur peut lire : Read sur les serveurs, stacks et deployments (déjà couvert par le tableau) suffit. Pour
   les alertes d'autres types de ressources (builds, repos…), donner Read dessus.
+- Le contrôle des mises à jour (`CheckStackForUpdate` / `CheckDeploymentForUpdate`, appelés après une mise à jour et par le bouton « Vérifier ») passe par l'API `write` de Komodo mais ne demande que **Execute** sur la ressource.
 - Le niveau **Write** n'est jamais nécessaire : l'app ne modifie pas la configuration.
 - En lecture seule (états, compteurs, alertes), Read partout suffit, mais les boutons « mettre à jour » et les entités
   `update` échoueront : Komodo refuse `Pull` / `Deploy` sans Execute.

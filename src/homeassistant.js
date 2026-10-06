@@ -48,6 +48,10 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
             add(key, 'button', label, { command_topic: t(key, 'set'), payload_press: PRESS, device_class: 'update' });
             commands.set(t(key, 'set'), { payload: PRESS, updates });
         };
+        dev.checkButton = (key, stack) => {
+            add(key, 'button', `Vérifier ${stack}`, { command_topic: t(key, 'set'), payload_press: PRESS, icon: 'mdi:refresh' });
+            commands.set(t(key, 'set'), { payload: PRESS, updates: [], check: { stack } });
+        };
         dev.update = (u) => {
             add(u.key, 'update', u.title, { state_topic: t(u.key), command_topic: t(u.key, 'set'), payload_install: INSTALL });
             dev.states.push([t(u.key), JSON.stringify({
@@ -94,6 +98,7 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
         d.alerts(s.alerts);
         d.button('update_all', 'Tout mettre à jour', todo);
         for (const c of s.containers) d.sensor(c.key, c.name, c.state, { icon: 'mdi:docker' });
+        for (const st of s.stacks ?? []) d.checkButton(st.key, st.name);
         for (const u of s.updates) d.update(u);
         d.finish();
     }

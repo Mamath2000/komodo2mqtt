@@ -114,8 +114,9 @@ async function buildModel(komodo) {
             });
         }
 
+        const ownStacks = stacks.filter((x) => x.info?.server_id === s.id).map((x) => ({ key: `check_${slug(x.name)}`, name: x.name }));
         const own = alerts ? alerts.filter((a) => a.server === s.id) : null;
-        out.push({ id: s.id, slug: slug(s.name), name: s.name, state, containers, updates, alerts: own });
+        out.push({ id: s.id, slug: slug(s.name), name: s.name, state, containers, updates, alerts: own, stacks: ownStacks });
     }
     return { servers: out, alerts };
 }

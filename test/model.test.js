@@ -54,3 +54,11 @@ test('alertes illisibles : pas d\'entité plutôt qu\'un faux 0', async () => {
     assert.equal(devices[0].discovery.components.alerts, undefined);
     assert.equal(devices[1].discovery.components.problem, undefined);
 });
+
+test('bouton « Vérifier » par stack sur le serveur', async () => {
+    const { devices, commands } = build(await buildModel(komodo(alerts)), cfg);
+    const nas = devices[1];
+    assert.equal(nas.discovery.components.check_app.platform, 'button');
+    assert.deepEqual(commands.get('k/komodo_nas/check_app/set').check, { stack: 'app' });
+    assert.equal(devices[2].discovery.components.check_app, undefined);
+});

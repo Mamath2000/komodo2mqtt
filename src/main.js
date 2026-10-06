@@ -10,7 +10,7 @@ const { loadConfig } = require('./config');
 const Komodo = require('./komodo');
 const { buildModel } = require('./model');
 const { build } = require('./homeassistant');
-const { installUpdates } = require('./actions');
+const { installUpdates, checkStack } = require('./actions');
 const log = require('./logger');
 const { runCheck } = require('./check');
 
@@ -108,6 +108,19 @@ function loop() {
         const cmd = commands.get(t);
         log.debug(`MQTT ← ${t}`, message.toString());
         if (!cmd || message.toString() !== cmd.payload) return log.debug('Commande ignorée (topic ou payload inconnu)');
+        if (cmd.check) {
+            log.info(`🔍 Recalcul des digests demandé : stack ${cmd.check.stack}`);
+            queue = queue.then(async () => {
+                try {
+                    await checkStack(komodo, cmd.check.stack);
+                    log.info(`✅ Digests recalculés : stack ${cmd.check.stack}`);
+                } catch (e) {
+                    log.error(`❌ Recalcul des digests (${cmd.check.stack}) : ${e.message}`);
+                }
+                await refresh();
+            });
+            return;
+        }
         if (!cmd.updates.length) return log.info('Rien à mettre à jour');
         const { updates } = cmd;
         log.info(`⬆  Mise à jour demandée : ${updates.map((u) => u.title).join(', ')}`);

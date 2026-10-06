@@ -24,6 +24,11 @@ class Komodo {
         return this.call('read', type, params);
     }
 
+    // /write: only used for CheckStackForUpdate / CheckDeploymentForUpdate (Execute is enough, no config is modified).
+    write(type, params) {
+        return this.call('write', type, params);
+    }
+
     // Komodo lists are paginated (30 by default): limit 0 = everything.
     list(type, params = {}) {
         return this.read(type, { ...params, limit: 0 });
