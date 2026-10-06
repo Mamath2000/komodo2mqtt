@@ -1,6 +1,6 @@
 {
   "name": "komodo2mqtt",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "Bridges Komodo to Home Assistant through MQTT (device discovery)",
   "main": "src/main.js",
   "scripts": {
