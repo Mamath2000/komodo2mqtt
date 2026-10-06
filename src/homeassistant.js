@@ -24,10 +24,10 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
             dev.states.push([t(key), String(value)]);
         };
         // list = open alerts (null: not readable, no entity). Count + "problem" flag, details as attributes.
-        dev.alerts = (list) => {
+        dev.alerts = (list, extra = {}) => {
             if (!list) return;
             add('alerts', 'sensor', 'Alertes ouvertes', {
-                state_topic: t('alerts'), json_attributes_topic: t('alerts', 'attributes'), icon: 'mdi:alert-outline',
+                state_topic: t('alerts'), json_attributes_topic: t('alerts', 'attributes'), icon: 'mdi:alert-outline', ...extra,
             });
             dev.states.push([t('alerts'), String(list.length)]);
             dev.states.push([t('alerts', 'attributes'), JSON.stringify({
@@ -35,7 +35,7 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
                 alerts: list.slice(0, 10).map(({ level, kind, target, since }) => ({ level, kind, target, since })),
             })]);
             add('problem', 'binary_sensor', 'Problème', {
-                state_topic: t('problem'), payload_on: 'ON', payload_off: 'OFF', device_class: 'problem',
+                state_topic: t('problem'), payload_on: 'ON', payload_off: 'OFF', device_class: 'problem', ...extra,
             });
             dev.states.push([t('problem'), list.length ? 'ON' : 'OFF']);
         };
@@ -91,11 +91,13 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
     for (const s of model.servers) {
         const todo = s.updates.filter((u) => u.available);
         const d = device(`komodo_${s.slug}`, s.name, 'komodo');
-        d.sensor('state', 'État', s.state, { icon: 'mdi:server' });
-        d.sensor('containers', 'Dockers', s.containers.length, { icon: 'mdi:docker' });
-        d.sensor('running', 'Dockers actifs', active(s.containers), { icon: 'mdi:docker' });
-        d.sensor('updates', 'Mises à jour disponibles', todo.length, { icon: 'mdi:package-up' });
-        d.alerts(s.alerts);
+        // Server-level sensors are diagnostics: the main sensors of the device are the docker states.
+        const diag = { entity_category: 'diagnostic' };
+        d.sensor('state', 'État', s.state, { icon: 'mdi:server', ...diag });
+        d.sensor('containers', 'Dockers', s.containers.length, { icon: 'mdi:docker', ...diag });
+        d.sensor('running', 'Dockers actifs', active(s.containers), { icon: 'mdi:docker', ...diag });
+        d.sensor('updates', 'Mises à jour disponibles', todo.length, { icon: 'mdi:package-up', ...diag });
+        d.alerts(s.alerts, diag);
         d.button('update_all', 'Tout mettre à jour', todo);
         for (const c of s.containers) d.sensor(c.key, c.name, c.state, { icon: 'mdi:docker' });
         for (const st of s.stacks ?? []) d.checkButton(st.key, st.name);

@@ -25,11 +25,10 @@ depuis Home Assistant.
 
 **Un appareil par serveur** (rattaché à Komodo)
 
-- capteurs : état du serveur, dockers, dockers actifs, mises à jour disponibles ;
-- `Alertes ouvertes` et `Problème` du serveur (alertes du serveur, de ses stacks et de ses deployments) ;
+- en **diagnostic** : état du serveur, dockers, dockers actifs, mises à jour disponibles, `Alertes ouvertes` et `Problème` du serveur (alertes du serveur, de ses stacks et de ses deployments) ;
 - bouton **Tout mettre à jour** (limité au serveur) ;
 - un bouton **Vérifier <stack>** par stack : demande à Komodo de recalculer les digests d'images du stack (voir ci-dessous) ;
-- un capteur d'état par docker : `running`, `healthy`, `unhealthy`, `starting`, `stopped`, `restarting`, `paused` ;
+- en **capteurs** (section principale) : l'état de chaque docker : `running`, `healthy`, `unhealthy`, `starting`, `stopped`, `restarting`, `paused` ;
 - une entité **update** par service de stack et par deployment, installable depuis Home Assistant.
 
 ## Fonctionnement

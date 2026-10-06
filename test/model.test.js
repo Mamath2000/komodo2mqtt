@@ -62,3 +62,13 @@ test('bouton « Vérifier » par stack sur le serveur', async () => {
     assert.deepEqual(commands.get('k/komodo_nas/check_app/set').check, { stack: 'app' });
     assert.equal(devices[2].discovery.components.check_app, undefined);
 });
+
+test('serveur : compteurs, état et alertes en diagnostic, états des dockers en capteurs', async () => {
+    const m = await buildModel(komodo(alerts));
+    m.servers[0].containers = [{ key: 'c_web', name: 'web', state: 'healthy' }];
+    const { devices } = build(m, cfg);
+    const c = devices[1].discovery.components;
+    for (const k of ['state', 'containers', 'running', 'updates', 'alerts', 'problem']) assert.equal(c[k].entity_category, 'diagnostic', k);
+    assert.equal(c.c_web.entity_category, undefined);
+    assert.equal(devices[0].discovery.components.servers.entity_category, undefined); // appareil Komodo inchangé
+});
