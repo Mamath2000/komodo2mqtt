@@ -27,12 +27,49 @@ async function listContainers(komodo, server) {
     }
 }
 
+// Open (unresolved) alerts. Komodo only returns alerts of resources the API user can read.
+// null = could not be read (the alert entities are then left out rather than showing a false 0).
+async function listOpenAlerts(komodo) {
+    try {
+        const alerts = [];
+        for (let page = 0; page < 5; page++) { // 100 per page
+            const res = await komodo.read('ListAlerts', { query: { resolved: false }, page });
+            alerts.push(...res.alerts.filter((a) => !a.resolved));
+            if (res.next_page == null) break;
+        }
+        return alerts;
+    } catch (e) {
+        log.warn(`ListAlerts : ${e.message}`);
+        return null;
+    }
+}
+
 async function buildModel(komodo) {
     const [servers, stacks, deployments] = await Promise.all([
         komodo.list('ListServers'),
         komodo.list('ListStacks'),
         komodo.list('ListDeployments'),
     ]);
+
+    const rawAlerts = await listOpenAlerts(komodo);
+    const serverOf = new Map(); // "Stack:<id>" -> server id
+    for (const st of stacks) serverOf.set(`Stack:${st.id}`, st.info?.server_id);
+    for (const d of deployments) serverOf.set(`Deployment:${d.id}`, d.info?.server_id);
+    const names = new Map([
+        ...servers.map((x) => [`Server:${x.id}`, x.name]),
+        ...stacks.map((x) => [`Stack:${x.id}`, x.name]),
+        ...deployments.map((x) => [`Deployment:${x.id}`, x.name]),
+    ]);
+    const alerts = rawAlerts && rawAlerts.map((a) => {
+        const key = `${a.target?.type}:${a.target?.id}`;
+        return {
+            level: a.level,
+            kind: a.data?.type ?? 'Unknown',
+            target: names.get(key) ? `${a.target.type} ${names.get(key)}` : String(a.target?.type ?? ''),
+            since: a.ts ? new Date(a.ts).toISOString() : null,
+            server: a.target?.type === 'Server' ? a.target.id : serverOf.get(key) ?? null,
+        };
+    });
 
     const out = [];
     for (const s of servers) {
@@ -77,9 +114,10 @@ async function buildModel(komodo) {
             });
         }
 
-        out.push({ id: s.id, slug: slug(s.name), name: s.name, state, containers, updates });
+        const own = alerts ? alerts.filter((a) => a.server === s.id) : null;
+        out.push({ id: s.id, slug: slug(s.name), name: s.name, state, containers, updates, alerts: own });
     }
-    return { servers: out };
+    return { servers: out, alerts };
 }
 
 module.exports = { slug, containerState, buildModel };

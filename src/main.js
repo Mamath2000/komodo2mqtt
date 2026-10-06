@@ -72,7 +72,7 @@ function loop() {
             model = await buildModel(komodo);
             const dockers = model.servers.reduce((n, s) => n + s.containers.length, 0);
             const updates = model.servers.reduce((n, s) => n + s.updates.filter((u) => u.available).length, 0);
-            const now = `${model.servers.length} serveur(s), ${dockers} docker(s), ${updates} mise(s) à jour disponible(s)`;
+            const now = `${model.servers.length} serveur(s), ${dockers} docker(s), ${updates} mise(s) à jour disponible(s), ${model.alerts ? model.alerts.length : '?'} alerte(s)`;
             if (now !== summary) log.info(`🔄 Komodo : ${now}`);
             summary = now;
             log.debug(`Lecture Komodo terminée (${Date.now() - t0} ms)`);

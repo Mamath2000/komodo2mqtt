@@ -23,8 +23,28 @@ JSON, monté en lecture seule dans le conteneur (`/app/config.conf`, ou `CONFIG_
 ## Identifiants
 
 `.env` (mode 600, jamais dans git ni dans l'image), modèle `.env.example` : `KOMODO_API_KEY`, `KOMODO_API_SECRET`,
-`KOMODO_URL` (optionnel), `MQTT_USER` / `MQTT_PASS` (optionnels). Utiliser une clé API dédiée, avec les droits de
-lecture et d'exécution (Pull / Deploy) sur les stacks et deployments à mettre à jour.
+`KOMODO_URL` (optionnel), `MQTT_USER` / `MQTT_PASS` (optionnels).
+
+### Droits de l'utilisateur Komodo
+
+Utiliser une clé API dédiée, d'un utilisateur de service (Settings → Users) : pas besoin d'être administrateur. Komodo
+ne renvoie à un utilisateur que les ressources sur lesquelles il a un droit : sans droit, les listes sont **vides**
+(`make check` le détecte).
+
+| Ressource | Niveau | Sert à |
+|---|---|---|
+| Servers | **Read** | serveurs, état, dockers (`ListServers`, `ListContainers`) |
+| Stacks | **Execute** | mises à jour des services (`PullStack`, `DeployStack`) ; Execute inclut Read |
+| Deployments | **Execute** | mises à jour des deployments (`PullDeployment`, `Deploy`) |
+
+- **Alertes** : il n'existe pas de droit « alertes » à part. `ListAlerts` ne renvoie que les alertes des ressources que
+  l'utilisateur peut lire : Read sur les serveurs, stacks et deployments (déjà couvert par le tableau) suffit. Pour
+  les alertes d'autres types de ressources (builds, repos…), donner Read dessus.
+- Le niveau **Write** n'est jamais nécessaire : l'app ne modifie pas la configuration.
+- En lecture seule (états, compteurs, alertes), Read partout suffit, mais les boutons « mettre à jour » et les entités
+  `update` échoueront : Komodo refuse `Pull` / `Deploy` sans Execute.
+- Le droit doit couvrir **chaque** stack et deployment à mettre à jour : passer par un groupe d'utilisateurs ou un tag
+  évite d'en oublier. En cas d'erreur sur une mise à jour, `LOG_LEVEL=debug` montre la réponse de Komodo.
 
 ## Traces
 
@@ -47,6 +67,7 @@ Les clés API ne sont jamais écrites dans les traces. Pour diagnostiquer : `LOG
 | `<topic>/lwt` | `online` / `offline` |
 | `<topic>/api` | `ON` / `OFF` : dernière lecture de Komodo réussie ou non |
 | `<topic>/<appareil>/<entité>/state` | état de l'entité (valeur simple, ou JSON pour une entité `update`) |
+| `<topic>/<appareil>/alerts/attributes` | JSON : `critical` et les 10 alertes ouvertes les plus récentes |
 | `<topic>/<appareil>/<entité>/set` | commande : `PRESS` (bouton), `INSTALL` (update) |
 
 Appareils : `komodo` et `komodo_<serveur>`. La découverte est publiée sur `homeassistant/device/<appareil>/config` et

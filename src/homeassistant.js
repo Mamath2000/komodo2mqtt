@@ -23,6 +23,22 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
             add(key, 'sensor', label, { state_topic: t(key), ...extra });
             dev.states.push([t(key), String(value)]);
         };
+        // list = open alerts (null: not readable, no entity). Count + "problem" flag, details as attributes.
+        dev.alerts = (list) => {
+            if (!list) return;
+            add('alerts', 'sensor', 'Alertes ouvertes', {
+                state_topic: t('alerts'), json_attributes_topic: t('alerts', 'attributes'), icon: 'mdi:alert-outline',
+            });
+            dev.states.push([t('alerts'), String(list.length)]);
+            dev.states.push([t('alerts', 'attributes'), JSON.stringify({
+                critical: list.filter((a) => a.level === 'CRITICAL').length,
+                alerts: list.slice(0, 10).map(({ level, kind, target, since }) => ({ level, kind, target, since })),
+            })]);
+            add('problem', 'binary_sensor', 'Problème', {
+                state_topic: t('problem'), payload_on: 'ON', payload_off: 'OFF', device_class: 'problem',
+            });
+            dev.states.push([t('problem'), list.length ? 'ON' : 'OFF']);
+        };
         dev.apiSensor = () => {
             add('api', 'binary_sensor', 'API Komodo', {
                 state_topic: `${topic}/api`, payload_on: 'ON', payload_off: 'OFF', device_class: 'connectivity', availability: [],
@@ -63,6 +79,7 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
     root.sensor('containers', 'Dockers', containers.length, { icon: 'mdi:docker' });
     root.sensor('running', 'Dockers actifs', active(containers), { icon: 'mdi:docker' });
     root.sensor('updates', 'Mises à jour disponibles', pending.length, { icon: 'mdi:package-up' });
+    root.alerts(model.alerts);
     root.apiSensor();
     root.button('update_all', 'Tout mettre à jour', pending);
     root.finish();
@@ -74,6 +91,7 @@ function build(model, { topic, discoveryPrefix, version }, busy = new Set()) {
         d.sensor('containers', 'Dockers', s.containers.length, { icon: 'mdi:docker' });
         d.sensor('running', 'Dockers actifs', active(s.containers), { icon: 'mdi:docker' });
         d.sensor('updates', 'Mises à jour disponibles', todo.length, { icon: 'mdi:package-up' });
+        d.alerts(s.alerts);
         d.button('update_all', 'Tout mettre à jour', todo);
         for (const c of s.containers) d.sensor(c.key, c.name, c.state, { icon: 'mdi:docker' });
         for (const u of s.updates) d.update(u);

@@ -19,12 +19,14 @@ depuis Home Assistant.
 **Appareil « Komodo »**
 
 - capteurs : serveurs, dockers, dockers actifs, mises à jour disponibles ;
+- **alertes** : capteur `Alertes ouvertes` (détail en attributs) et capteur binaire `Problème` (allumé dès qu'une alerte est ouverte) ;
 - `API Komodo` (connectivité) ;
 - bouton **Tout mettre à jour**.
 
 **Un appareil par serveur** (rattaché à Komodo)
 
 - capteurs : état du serveur, dockers, dockers actifs, mises à jour disponibles ;
+- `Alertes ouvertes` et `Problème` du serveur (alertes du serveur, de ses stacks et de ses deployments) ;
 - bouton **Tout mettre à jour** (limité au serveur) ;
 - un capteur d'état par docker : `running`, `healthy`, `unhealthy`, `starting`, `stopped`, `restarting`, `paused` ;
 - une entité **update** par service de stack et par deployment, installable depuis Home Assistant.
@@ -38,6 +40,13 @@ depuis Home Assistant.
 2. Les mises à jour viennent de `update_available` : par service pour les stacks, par deployment sinon. Les dockers
    qui ne dépendent ni d'un stack ni d'un deployment n'ont que leur état.
 3. Publication (retenue, uniquement si la valeur change) des états et de la découverte ; un serveur disparu est retiré.
+
+**Alertes.** `ListAlerts` renvoie les alertes ouvertes (non résolues) des ressources que l'utilisateur de la clé API peut
+lire. Elles sont rattachées au serveur concerné (directement, ou via le stack / deployment qui y tourne) ; l'appareil
+`Komodo` compte toutes les alertes lisibles, y compris celles qui ne dépendent d'aucun serveur (build, repo…). Le capteur
+`Alertes ouvertes` a pour attributs `critical` (nombre d'alertes critiques) et `alerts` (les 10 plus récentes : niveau,
+type, ressource, date). Si les alertes ne peuvent pas être lues, les entités d'alertes sont **absentes** plutôt que
+d'afficher un faux zéro (un avertissement est écrit dans les traces et `make check` le signale).
 
 Installer une mise à jour (entité `update` ou bouton) exécute dans Komodo, **l'une après l'autre** et en attendant la
 fin de chaque Update : `PullStack` puis `DeployStack` (limités aux services concernés), ou `PullDeployment` puis

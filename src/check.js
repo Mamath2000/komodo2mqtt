@@ -44,12 +44,15 @@ async function runCheck(komodo, out = console.log) {
     let ok = true;
     try {
         const model = await buildModel(komodo);
+        if (model.alerts === null) out('    ⚠️  alertes illisibles (ListAlerts) : vérifier les droits Read de l\'utilisateur sur les ressources');
         for (const s of model.servers) {
             out(`🖥  ${s.name} (${s.state}) : ${s.containers.length} docker(s), ${s.updates.length} élément(s) mettable(s) à jour`);
             if (s.state !== 'Ok') ok = false;
             for (const c of s.containers) out(`    ${c.state.padEnd(10)} ${c.name}`);
             for (const u of s.updates) out(`    ${u.available ? '⬆ ' : '✓ '} ${u.kind.padEnd(10)} ${u.title} (${u.image})`);
+            for (const a of s.alerts ?? []) out(`    🚨 ${a.level.padEnd(8)} ${a.kind} (${a.target})`);
         }
+        if (model.alerts) out(`🚨 ${model.alerts.length} alerte(s) ouverte(s) au total`);
     } catch (e) {
         out(`    ❌ ${e.message}`);
         return false;

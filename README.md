@@ -2,7 +2,7 @@
 
 Bridges [Komodo](https://komo.do) to Home Assistant through MQTT, with Home Assistant **device discovery**:
 a `Komodo` device, one device per server, a status sensor per docker, an `update` entity per stack service /
-deployment (installable from Home Assistant) and "update all" buttons.
+deployment (installable from Home Assistant), "update all" buttons and open Komodo alerts.
 
 Full documentation (French): **[docs/](docs/index.md)**.
 
