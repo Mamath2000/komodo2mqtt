@@ -1,5 +1,5 @@
 # Makefile pour komodo2mqtt — doc : docs/
-.PHONY: help install test check start debug docker-build docker-release
+.PHONY: help install test check start debug docker-build docker-release docker-release-minor docker-release-major
 .DEFAULT_GOAL := help
 
 help: ## Affiche cette aide
@@ -26,5 +26,11 @@ debug: ## Comme start, avec les traces debug (appels Komodo, publications MQTT)
 docker-build: ## Construit l'image locale (sans push)
 	bash docker-release.sh build
 
-docker-release: ## Release : version +1, commit, build et push Docker Hub, tag git
+docker-release: ## Release : build +1 (X.Y.Z+1), commit, build et push Docker Hub, tag git
 	bash docker-release.sh release
+
+docker-release-minor: ## Release : mineur +1, build remis à 0 (X.Y+1.0), commit, build et push Docker Hub, tag git
+	bash docker-release.sh release-minor
+
+docker-release-major: ## Release : majeur +1, mineur et build à 0 (X+1.0.0), commit, build et push Docker Hub, tag git
+	bash docker-release.sh release-major

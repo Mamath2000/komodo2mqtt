@@ -82,7 +82,14 @@ republiée quand Home Assistant redémarre (`homeassistant/status`).
 | `make check` | Diagnostic sans MQTT en 3 étapes : connexion/authentification Komodo, liste des serveurs, dockers et mises à jour. Code de sortie 1 au premier problème (clé refusée, Komodo injoignable, aucun serveur visible, serveur hors ligne) |
 | `make start` | Boucle en local |
 | `make debug` | Boucle en local avec les traces `debug` |
-| `make docker-build` / `make docker-release` | Image locale / release Docker Hub `mathmath350/komodo2mqtt` |
+| `make docker-build` | Image locale (sans push) |
+| `make docker-release` | Release Docker Hub `mathmath350/komodo2mqtt` : **build** +1 automatique (`0.3.7` → `0.3.8`) |
+| `make docker-release-minor` | Release avec version **mineure** +1, build remis à 0 (`0.3.7` → `0.4.0`) |
+| `make docker-release-major` | Release avec version **majeure** +1, mineur et build remis à 0 (`0.3.7` → `1.0.0`) |
+
+Chaque release commite la nouvelle version (`package.json`, `package-lock.json`), construit et pousse l'image
+(`latest`, la version, la référence git) puis pose le tag git `vX.Y.Z` ; il faut un dépôt propre et être connecté à
+Docker Hub. À pousser ensuite : `git push origin main --tags`.
 
 ## Conteneur
 

@@ -16,4 +16,4 @@ docker compose up -d
 
 Log level: `log_level` in `config.conf` (`error`, `warn`, `info`, `debug`) or `LOG_LEVEL` / `--debug`.
 
-`make help` lists the local commands (`test`, `check`, `start`, `docker-build`, `docker-release`).
+`make help` lists the local commands (`test`, `check`, `start`, `docker-build`, `docker-release`, `docker-release-minor`, `docker-release-major`).
