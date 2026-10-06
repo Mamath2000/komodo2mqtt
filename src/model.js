@@ -1,3 +1,4 @@
+const log = require('./logger');
 // Builds a simple model { servers: [...] } from the Komodo API.
 const slug = (s) =>
     String(s).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
@@ -21,6 +22,7 @@ async function listContainers(komodo, server) {
     try {
         return await komodo.read('ListContainers', { server });
     } catch (e) {
+        log.debug(`ListContainers indisponible (${e.message}) : essai de ListDockerContainers`);
         return komodo.read('ListDockerContainers', { server });
     }
 }
@@ -44,7 +46,7 @@ async function buildModel(komodo) {
                     state: containerState(c),
                 }));
             } catch (e) {
-                console.error(`ListContainers ${s.name}: ${e.message}`);
+                log.warn(`ListContainers ${s.name} : ${e.message}`);
             }
         }
 

@@ -11,6 +11,7 @@ const Komodo = require('./komodo');
 const { buildModel } = require('./model');
 const { build } = require('./homeassistant');
 const { installUpdates } = require('./actions');
+const log = require('./logger');
 
 const HA_STATUS_TOPIC = 'homeassistant/status';
 const ONCE = process.argv.slice(2).includes('--once');
@@ -19,9 +20,10 @@ let config;
 try {
     config = loadConfig({ args: new Set(process.argv.slice(2)) });
 } catch (e) {
-    console.error(`❌ Configuration : ${e.message}`);
+    log.error(`❌ Configuration : ${e.message}`);
     process.exit(1);
 }
+log.setLevel(config.log_level);
 const komodo = new Komodo(config.komodo);
 const topic = config.mqtt.topic;
 const cfg = { topic, discoveryPrefix: config.discovery_prefix, version };
@@ -45,6 +47,7 @@ function loop() {
     const pub = (t, value) => {
         if (sent.get(t) === value) return;
         sent.set(t, value);
+        log.debug(`MQTT → ${t}`, t.endsWith('/config') ? `(${value.length} octets)` : value);
         client.publish(t, value, { retain: true, qos: 1 });
     };
 
@@ -64,48 +67,66 @@ function loop() {
             for (const id of known) if (!ids.has(id)) pub(`${cfg.discoveryPrefix}/device/${id}/config`, ''); // device gone
         }
         for (const dev of built.devices) for (const [t, v] of dev.states) pub(t, v);
+        for (const id of ids) if (!known.has(id)) log.info(`📟 Appareil annoncé : ${id}`);
+        for (const id of known) if (!ids.has(id)) log.info(`📟 Appareil retiré : ${id}`);
         known = ids;
     };
 
+    let summary = '';
+    let apiDown = false;
     const refresh = async () => {
+        const t0 = Date.now();
         try {
             model = await buildModel(komodo);
+            const dockers = model.servers.reduce((n, s) => n + s.containers.length, 0);
+            const updates = model.servers.reduce((n, s) => n + s.updates.filter((u) => u.available).length, 0);
+            const now = `${model.servers.length} serveur(s), ${dockers} docker(s), ${updates} mise(s) à jour disponible(s)`;
+            if (now !== summary) log.info(`🔄 Komodo : ${now}`);
+            summary = now;
+            log.debug(`Lecture Komodo terminée (${Date.now() - t0} ms)`);
+            if (apiDown) log.info('✅ Komodo de nouveau joignable');
+            apiDown = false;
             render();
             pub(`${topic}/api`, 'ON');
         } catch (e) {
-            console.error(`❌ Komodo : ${e.message}`);
+            if (!apiDown) log.warn(`⚠️  Komodo injoignable ou en erreur : ${e.message}`);
+            else log.debug(`Komodo toujours en erreur : ${e.message}`);
+            apiDown = true;
             pub(`${topic}/api`, 'OFF');
         }
     };
 
     client.on('connect', () => {
-        console.log('📡 Connecté au broker MQTT');
+        log.info('📡 Connecté au broker MQTT');
         sent.clear();
         client.publish(`${topic}/lwt`, 'online', { retain: true, qos: 1 });
         client.subscribe([HA_STATUS_TOPIC, `${topic}/+/+/set`]);
         render();
     });
-    client.on('error', (e) => console.error(`❌ MQTT : ${e.message}`));
+    client.on('error', (e) => log.error(`❌ MQTT : ${e.message}`));
     client.on('message', (t, message, packet) => {
         if (t === HA_STATUS_TOPIC) {
             if (message.toString() === 'online' && !packet.retain) {
-                console.log('🏠 Home Assistant redémarré : republication');
+                log.info('🏠 Home Assistant redémarré : republication');
                 sent.clear();
                 render();
             }
             return;
         }
         const cmd = commands.get(t);
-        if (!cmd || message.toString() !== cmd.payload || !cmd.updates.length) return;
+        log.debug(`MQTT ← ${t}`, message.toString());
+        if (!cmd || message.toString() !== cmd.payload) return log.debug('Commande ignorée (topic ou payload inconnu)');
+        if (!cmd.updates.length) return log.info('Rien à mettre à jour');
         const { updates } = cmd;
-        console.log(`⬆  Mise à jour : ${updates.map((u) => u.title).join(', ')}`);
+        log.info(`⬆  Mise à jour demandée : ${updates.map((u) => u.title).join(', ')}`);
         queue = queue.then(async () => {
             updates.forEach((u) => busy.add(u.key));
             render();
             try {
                 await installUpdates(komodo, updates);
+                log.info('✅ Mise à jour terminée');
             } catch (e) {
-                console.error(`❌ Mise à jour : ${e.message}`);
+                log.error(`❌ Mise à jour : ${e.message}`);
             } finally {
                 updates.forEach((u) => busy.delete(u.key));
                 await refresh();
@@ -114,7 +135,7 @@ function loop() {
     });
 
     const shutdown = (reason) => {
-        console.log(`🛑 Arrêt (${reason})`);
+        log.info(`🛑 Arrêt (${reason})`);
         client.publish(`${topic}/lwt`, 'offline', { retain: true, qos: 1 }, () => client.end(false, () => process.exit(0)));
         setTimeout(() => process.exit(0), 1000);
     };
@@ -125,13 +146,13 @@ function loop() {
         await refresh();
         setTimeout(tick, config.interval_seconds * 1000);
     };
-    console.log(`🚀 komodo2mqtt ${version} : ${config.komodo.url}, toutes les ${config.interval_seconds} s`);
+    log.info(`🚀 komodo2mqtt ${version} : ${config.komodo.url}, toutes les ${config.interval_seconds} s, logs ${config.log_level}`);
     tick();
 }
 
 if (ONCE) {
     once().catch((e) => {
-        console.error(`❌ ${e.message}`);
+        log.error(`❌ ${e.message}`);
         process.exit(1);
     });
 } else {

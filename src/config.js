@@ -1,6 +1,7 @@
 // config.conf (JSON) + secrets from the environment (.env): KOMODO_API_KEY / KOMODO_API_SECRET.
 const fs = require('fs');
 const path = require('path');
+const { LEVELS } = require('./logger');
 
 function loadConfig({ env = process.env, args = new Set(), dir = __dirname } = {}) {
     const configPath = env.CONFIG_FILE || path.join(dir, '../config.conf');
@@ -19,6 +20,8 @@ function loadConfig({ env = process.env, args = new Set(), dir = __dirname } = {
     };
     config.discovery_prefix ||= 'homeassistant';
     config.interval_seconds ||= 60;
+    config.log_level = args.has('--debug') ? 'debug' : env.LOG_LEVEL || config.log_level || 'info';
+    if (!(config.log_level in LEVELS)) throw new Error(`log_level « ${config.log_level} » inconnu (${Object.keys(LEVELS).join(', ')})`);
     return config;
 }
 

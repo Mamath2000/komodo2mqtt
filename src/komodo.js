@@ -1,4 +1,6 @@
 // Minimal client for the Komodo HTTP API (POST /read and POST /execute).
+const log = require('./logger');
+
 class Komodo {
     constructor({ url, key, secret }) {
         this.url = url.replace(/\/+$/, '');
@@ -6,13 +8,15 @@ class Komodo {
     }
 
     async call(path, type, params = {}) {
+        const t0 = Date.now();
         const res = await fetch(`${this.url}/${path}`, {
             method: 'POST',
             headers: this.headers,
             body: JSON.stringify({ type, params }),
             signal: AbortSignal.timeout(30_000),
         });
-        if (!res.ok) throw new Error(`Komodo ${type} : HTTP ${res.status} ${await res.text()}`);
+        log.debug(`Komodo ${path}/${type}`, params, `→ HTTP ${res.status} (${Date.now() - t0} ms)`);
+        if (!res.ok) throw new Error(`Komodo ${type} : HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
         return res.json();
     }
 
@@ -35,6 +39,7 @@ class Komodo {
             if (Date.now() > deadline) throw new Error(`${type} : délai dépassé`);
             await new Promise((r) => setTimeout(r, 2000));
             cur = await this.read('GetUpdate', { id });
+            log.debug(`${type} : Update ${id} ${cur.status}`);
         }
         if (!cur.success) throw new Error(`${type} ${JSON.stringify(params)} : échec (voir les Updates de Komodo)`);
         return cur;

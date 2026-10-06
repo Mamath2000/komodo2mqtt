@@ -1,5 +1,5 @@
 # Makefile pour komodo2mqtt — doc : docs/
-.PHONY: help install test check start docker-build docker-release
+.PHONY: help install test check start debug docker-build docker-release
 .DEFAULT_GOAL := help
 
 help: ## Affiche cette aide
@@ -18,6 +18,10 @@ check: ## Un passage sans MQTT : affiche serveurs, dockers et mises à jour vus 
 start: ## Lance la boucle en local (config.conf + .env, états sur MQTT)
 	@[ -f config.conf ] || { echo "config.conf absent"; exit 1; }
 	@set -a; [ -f .env ] && . ./.env; set +a; node src/main.js
+
+debug: ## Comme start, avec les traces debug (appels Komodo, publications MQTT)
+	@[ -f config.conf ] || { echo "config.conf absent"; exit 1; }
+	@set -a; [ -f .env ] && . ./.env; set +a; node src/main.js --debug
 
 docker-build: ## Construit l'image locale (sans push)
 	bash docker-release.sh build

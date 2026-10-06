@@ -14,6 +14,7 @@ JSON, monté en lecture seule dans le conteneur (`/app/config.conf`, ou `CONFIG_
 |---|---|
 | `komodo.url` | URL de Komodo Core (`KOMODO_URL` prioritaire) — requis |
 | `interval_seconds` | Intervalle entre deux lectures (défaut 60) |
+| `log_level` | Niveau des traces : `error`, `warn`, `info` (défaut), `debug` (`LOG_LEVEL` ou `--debug` prioritaires) |
 | `mqtt.broker` | URL du broker — requis en boucle |
 | `mqtt.topic` | Préfixe des topics (défaut `komodo2mqtt`) |
 | `mqtt.home_assistant_autodiscovery` | Découverte HA (défaut `true`) |
@@ -24,6 +25,20 @@ JSON, monté en lecture seule dans le conteneur (`/app/config.conf`, ou `CONFIG_
 `.env` (mode 600, jamais dans git ni dans l'image), modèle `.env.example` : `KOMODO_API_KEY`, `KOMODO_API_SECRET`,
 `KOMODO_URL` (optionnel), `MQTT_USER` / `MQTT_PASS` (optionnels). Utiliser une clé API dédiée, avec les droits de
 lecture et d'exécution (Pull / Deploy) sur les stacks et deployments à mettre à jour.
+
+## Traces
+
+Format : `2026-10-06T10:00:00.000Z INFO  message` ; `error` et `warn` sur stderr, le reste sur stdout
+(`docker compose logs -f komodo2mqtt`).
+
+| Niveau | Contenu |
+|---|---|
+| `error` | Échec d'une mise à jour, erreur MQTT, configuration invalide |
+| `warn` | Komodo injoignable (une seule fois jusqu'au retour à la normale), serveur dont les dockers n'ont pas pu être lus |
+| `info` | Démarrage, connexion MQTT, appareils annoncés/retirés, bilan Komodo quand il change, mises à jour demandées (étapes pull/deploy) |
+| `debug` | Chaque appel à l'API Komodo (type, paramètres, statut HTTP, durée), chaque publication et commande MQTT, durée de chaque lecture |
+
+Les clés API ne sont jamais écrites dans les traces. Pour diagnostiquer : `LOG_LEVEL=debug` ou `make debug`.
 
 ## MQTT et Home Assistant
 
@@ -44,6 +59,7 @@ republiée quand Home Assistant redémarre (`homeassistant/status`).
 | `make test` | Tests unitaires |
 | `make check` | Un passage sans MQTT : affiche serveurs, dockers et mises à jour vus dans Komodo |
 | `make start` | Boucle en local |
+| `make debug` | Boucle en local avec les traces `debug` |
 | `make docker-build` / `make docker-release` | Image locale / release Docker Hub `mathmath350/komodo2mqtt` |
 
 ## Conteneur

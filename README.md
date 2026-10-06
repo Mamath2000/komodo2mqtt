@@ -14,4 +14,6 @@ cp .env.example .env && chmod 600 .env     # KOMODO_API_KEY / KOMODO_API_SECRET 
 docker compose up -d
 ```
 
+Log level: `log_level` in `config.conf` (`error`, `warn`, `info`, `debug`) or `LOG_LEVEL` / `--debug`.
+
 `make help` lists the local commands (`test`, `check`, `start`, `docker-build`, `docker-release`).
