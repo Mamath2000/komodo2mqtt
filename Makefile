@@ -11,7 +11,7 @@ install: ## Installe les dépendances (npm ci, versions du package-lock.json)
 test: ## Tests unitaires
 	npm test
 
-check: ## Un passage sans MQTT : affiche serveurs, dockers et mises à jour vus dans Komodo
+check: ## Diagnostic sans MQTT : test de connexion Komodo, liste des serveurs, dockers et mises à jour
 	@[ -f config.conf ] || { echo "config.conf absent"; exit 1; }
 	@set -a; [ -f .env ] && . ./.env; set +a; node src/main.js --once
 

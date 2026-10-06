@@ -12,6 +12,7 @@ const { buildModel } = require('./model');
 const { build } = require('./homeassistant');
 const { installUpdates } = require('./actions');
 const log = require('./logger');
+const { runCheck } = require('./check');
 
 const HA_STATUS_TOPIC = 'homeassistant/status';
 const ONCE = process.argv.slice(2).includes('--once');
@@ -27,15 +28,6 @@ log.setLevel(config.log_level);
 const komodo = new Komodo(config.komodo);
 const topic = config.mqtt.topic;
 const cfg = { topic, discoveryPrefix: config.discovery_prefix, version };
-
-async function once() {
-    const model = await buildModel(komodo);
-    for (const s of model.servers) {
-        console.log(`🖥  ${s.name} (${s.state}) : ${s.containers.length} docker(s)`);
-        for (const c of s.containers) console.log(`    ${c.state.padEnd(10)} ${c.name}`);
-        for (const u of s.updates) console.log(`    ${u.available ? '⬆ ' : '✓ '} ${u.kind.padEnd(10)} ${u.title} (${u.image})`);
-    }
-}
 
 function loop() {
     const client = mqtt.connect(config.mqtt.broker, {
@@ -151,7 +143,7 @@ function loop() {
 }
 
 if (ONCE) {
-    once().catch((e) => {
+    runCheck(komodo).then((ok) => process.exit(ok ? 0 : 1)).catch((e) => {
         log.error(`❌ ${e.message}`);
         process.exit(1);
     });

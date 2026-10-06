@@ -57,7 +57,7 @@ republiée quand Home Assistant redémarre (`homeassistant/status`).
 | Cible | Effet |
 |---|---|
 | `make test` | Tests unitaires |
-| `make check` | Un passage sans MQTT : affiche serveurs, dockers et mises à jour vus dans Komodo |
+| `make check` | Diagnostic sans MQTT en 3 étapes : connexion/authentification Komodo, liste des serveurs, dockers et mises à jour. Code de sortie 1 au premier problème (clé refusée, Komodo injoignable, aucun serveur visible, serveur hors ligne) |
 | `make start` | Boucle en local |
 | `make debug` | Boucle en local avec les traces `debug` |
 | `make docker-build` / `make docker-release` | Image locale / release Docker Hub `mathmath350/komodo2mqtt` |
