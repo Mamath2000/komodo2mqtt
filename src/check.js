@@ -29,7 +29,13 @@ async function runCheck(komodo, out = console.log) {
         return false;
     }
     if (!servers.length) {
-        out('    ⚠️  aucun serveur renvoyé : l\'utilisateur de la clé API doit avoir au moins le droit Read sur les serveurs');
+        // same request without the pagination parameter: tells a permission problem from a pagination one
+        const plain = await komodo.read('ListServers').catch(() => []);
+        if (plain.length) {
+            out(`    ⚠️  ListServers renvoie ${plain.length} serveur(s) sans le paramètre « limit » mais 0 avec : problème de pagination de cette version de Komodo`);
+            return false;
+        }
+        out('    ⚠️  aucun serveur renvoyé, avec ou sans pagination : l\'utilisateur de la clé API n\'a probablement le droit Read sur aucun serveur (Komodo ne liste que les ressources autorisées)');
         return false;
     }
     out(`    ✅ ${servers.length} serveur(s) : ${servers.map((s) => `${s.name} (${s.info?.state ?? '?'})`).join(', ')}`);

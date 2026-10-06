@@ -11,7 +11,7 @@ function fake(handlers) {
             if (h instanceof Error) throw h;
             return typeof h === 'function' ? h(p) : h;
         },
-        list: (type, p) => fake(handlers).read(type, p),
+        list: (type, p) => fake(handlers).read(type, { ...p, limit: 0 }),
     };
 }
 const run = async (handlers) => {
@@ -40,5 +40,14 @@ test('check : clé refusée', async () => {
 test('check : aucun serveur visible', async () => {
     const { ok, text } = await run({ GetVersion: { version: '2.3.0' }, ListServers: [] });
     assert.equal(ok, false);
-    assert.match(text, /droit Read sur les serveurs/);
+    assert.match(text, /droit Read sur aucun serveur/);
+});
+
+test('check : liste vide seulement avec limit', async () => {
+    const { ok, text } = await run({
+        GetVersion: { version: '2.3.3' },
+        ListServers: (p) => (p?.limit === 0 ? [] : [{ id: 's1', name: 'nas', info: { state: 'Ok' } }]),
+    });
+    assert.equal(ok, false);
+    assert.match(text, /problème de pagination/);
 });
