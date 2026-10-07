@@ -27,7 +27,7 @@ depuis Home Assistant.
 
 - en **diagnostic** : état du serveur, dockers, dockers actifs, mises à jour disponibles, `Alertes ouvertes` et `Problème` du serveur (alertes du serveur, de ses stacks et de ses deployments) ;
 - bouton **Tout mettre à jour** (limité au serveur) ;
-- un bouton **Vérifier <stack>** par stack : demande à Komodo de recalculer les digests d'images du stack (voir ci-dessous) ;
+- un bouton **Vérifier `<stack>`** par stack : demande à Komodo de recalculer les digests d'images du stack (voir ci-dessous) ;
 - en **capteurs** (section principale) : l'état de chaque docker : `running`, `healthy`, `unhealthy`, `starting`, `stopped`, `restarting`, `paused` ;
 - une entité **update** par service de stack et par deployment, installable depuis Home Assistant.
 
@@ -52,7 +52,7 @@ d'afficher un faux zéro (un avertissement est écrit dans les traces et `make c
 « latest » de tout le stack : les autres services paraissent alors à jour jusqu'au prochain contrôle planifié de Komodo,
 alors qu'ils tournent toujours avec l'ancienne image. Pour l'éviter, l'app lance `CheckStackForUpdate` (ou
 `CheckDeploymentForUpdate`) juste après chaque mise à jour, sans déclencher d'auto-redéploiement. Le bouton
-**Vérifier <stack>** fait la même chose à la demande. Un échec de ce contrôle n'invalide pas la mise à jour : il est
+**Vérifier `<stack>`** fait la même chose à la demande. Un échec de ce contrôle n'invalide pas la mise à jour : il est
 signalé en `warn` dans les traces.
 
 Installer une mise à jour (entité `update` ou bouton) exécute dans Komodo, **l'une après l'autre** et en attendant la
